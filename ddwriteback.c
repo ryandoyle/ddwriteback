@@ -12,12 +12,10 @@
 #include <linux/mmzone.h>
 #include <linux/vmstat.h>
 
-#define PAGE_SIZE_IN_KILOBYTES 4
-
 static struct task_struct *ddwriteback_thread;
 
 static unsigned long kilobytes_written_from_page_cache(void) {
-  return global_page_state(NR_WRITTEN) * PAGE_SIZE_IN_KILOBYTES;
+  return global_page_state(NR_WRITTEN) * PAGE_SIZE/1024;
 }
 
 static int ddwriteback_kthread_runner(void *params) {
