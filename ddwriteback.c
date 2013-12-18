@@ -8,15 +8,23 @@
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/kthread.h>
+#include <linux/mm.h>
+#include <linux/mmzone.h>
+#include <linux/vmstat.h>
+
+#define PAGE_SIZE_IN_KILOBYTES 4
 
 static struct task_struct *ddwriteback_thread;
 
 static int ddwriteback_kthread_runner(void *params) {
+  unsigned long dirty_pages; 
+
   printk(KERN_INFO "ddwriteback_kthread_runner: Started\n");
 
   while (!kthread_should_stop()) {
     // Do work
-    printk(KERN_INFO "ddwriteback_kthread_runner: in loop\n");
+    dirty_pages = global_page_state(NR_FILE_DIRTY) * PAGE_SIZE_IN_KILOBYTES;
+    printk(KERN_INFO "ddwriteback_kthread_runner: dirty bytes %lu\n", dirty_pages);
 
     // Sleep for 1 second
     set_current_state(TASK_INTERRUPTIBLE);
