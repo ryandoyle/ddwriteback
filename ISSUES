@@ -1,0 +1,1 @@
+- Had problems with total pages written to disk not always increasing, occasionally decreasing (bug?)
