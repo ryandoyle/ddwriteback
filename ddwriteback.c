@@ -31,7 +31,13 @@ static int ddwriteback_kthread_runner(void *params) {
   while (!kthread_should_stop()) {
     // Calculate the rate
     bytes_written_now = kilobytes_written_from_page_cache();
-    bytes_delta = bytes_written_now - bytes_written_previous + 1;
+    if(bytes_written_now > bytes_written_previous) {
+      // There are been times when NR_WRITTEN decreases which causes 'negative' numbers
+      bytes_delta = bytes_written_now - bytes_written_previous;
+    }
+    else {
+      bytes_delta = 0;
+    }
     bytes_written_previous = bytes_written_now;
     
     // Is it highest rate we've seen?
