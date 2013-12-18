@@ -17,14 +17,19 @@
 static struct task_struct *ddwriteback_thread;
 
 static int ddwriteback_kthread_runner(void *params) {
-  unsigned long dirty_pages; 
+  unsigned long bytes_written_previous;
+  unsigned long bytes_written_now;
+  unsigned long bytes_delta;
 
+  bytes_written_previous = global_page_state(NR_WRITTEN) * PAGE_SIZE_IN_KILOBYTES;
   printk(KERN_INFO "ddwriteback_kthread_runner: Started\n");
 
   while (!kthread_should_stop()) {
-    // Do work
-    dirty_pages = global_page_state(NR_FILE_DIRTY) * PAGE_SIZE_IN_KILOBYTES;
-    printk(KERN_INFO "ddwriteback_kthread_runner: dirty bytes %lu\n", dirty_pages);
+    bytes_written_now = global_page_state(NR_WRITTEN) * PAGE_SIZE_IN_KILOBYTES;
+    bytes_delta = bytes_written_now - bytes_written_previous;
+    bytes_written_previous = bytes_written_now;
+    
+    printk(KERN_INFO "ddwriteback_kthread_runner: write rate: %luKB/s\n", bytes_delta);
 
     // Sleep for 1 second
     set_current_state(TASK_INTERRUPTIBLE);
