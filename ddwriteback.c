@@ -37,10 +37,10 @@ static int ddwriteback_kthread_runner(void *params) {
     // Is it highest rate we've seen?
     if(bytes_delta > highest_rate) {
       highest_rate = bytes_delta;
-      printk(KERN_INFO "ddwriteback_kthread_runner: NEW write rate: %luKB/s\n", bytes_delta);
+      printk(KERN_INFO "ddwriteback_kthread_runner: NEW write rate: %luKB/s\n", highest_rate);
     }
 
-    printk(KERN_INFO "ddwriteback_kthread_runner: write rate: %luKB/s\n", bytes_delta);
+    printk(KERN_INFO "ddwriteback_kthread_runner: total written: %lu  write rate: %luKB/s\n", global_page_state(NR_WRITTEN), bytes_delta);
 
     // Sleep for 1 second
     set_current_state(TASK_INTERRUPTIBLE);
