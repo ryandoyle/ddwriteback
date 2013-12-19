@@ -1,1 +1,3 @@
 - Had problems with total pages written to disk not always increasing, occasionally decreasing (bug?)
+- Data structures that I needed to access weren't exported to the module (can't just include the header, need to export via EXPORT_SYMBOL macro)
+- Testing, hanging on close(), mount option
