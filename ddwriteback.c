@@ -11,6 +11,7 @@
 #include <linux/mm.h>
 #include <linux/mmzone.h>
 #include <linux/vmstat.h>
+#include <linux/writeback.h>
 
 static struct task_struct *ddwriteback_thread;
 
@@ -19,34 +20,36 @@ static unsigned long kilobytes_written_from_page_cache(void) {
 }
 
 static int ddwriteback_kthread_runner(void *params) {
-  unsigned long bytes_written_previous;
-  unsigned long bytes_written_now;
-  unsigned long bytes_delta;
+  unsigned long kilobytes_written_previous;
+  unsigned long kilobytes_written_now;
+  unsigned long kilobytes_delta;
   unsigned long highest_rate;
   highest_rate = 0;
 
-  bytes_written_previous = kilobytes_written_from_page_cache();
+  kilobytes_written_previous = kilobytes_written_from_page_cache();
   printk(KERN_INFO "ddwriteback_kthread_runner: Started\n");
 
   while (!kthread_should_stop()) {
     // Calculate the rate
-    bytes_written_now = kilobytes_written_from_page_cache();
-    if(bytes_written_now > bytes_written_previous) {
+    kilobytes_written_now = kilobytes_written_from_page_cache();
+    if(kilobytes_written_now > kilobytes_written_previous) {
       // There are been times when NR_WRITTEN decreases which causes 'negative' numbers
-      bytes_delta = bytes_written_now - bytes_written_previous;
+      kilobytes_delta = kilobytes_written_now - kilobytes_written_previous;
     }
     else {
-      bytes_delta = 0;
+      kilobytes_delta = 0;
     }
-    bytes_written_previous = bytes_written_now;
+    kilobytes_written_previous = kilobytes_written_now;
     
     // Is it highest rate we've seen?
-    if(bytes_delta > highest_rate) {
-      highest_rate = bytes_delta;
+    if(kilobytes_delta > highest_rate) {
+      highest_rate = kilobytes_delta;
       printk(KERN_INFO "ddwriteback_kthread_runner: NEW write rate: %luKB/s\n", highest_rate);
+      dirty_background_ratio = 0;
+      dirty_background_bytes = highest_rate * 1024; // Rew rate!
     }
 
-    printk(KERN_INFO "ddwriteback_kthread_runner: total written: %lu  write rate: %luKB/s\n", global_page_state(NR_WRITTEN), bytes_delta);
+    printk(KERN_INFO "ddwriteback_kthread_runner: total written: %lu  write rate: %luKB/s\n", global_page_state(NR_WRITTEN), kilobytes_delta);
 
     // Sleep for 1 second
     set_current_state(TASK_INTERRUPTIBLE);
