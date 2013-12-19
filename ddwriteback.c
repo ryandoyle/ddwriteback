@@ -13,6 +13,8 @@
 #include <linux/vmstat.h>
 #include <linux/writeback.h>
 
+#define WRITE_SCALING 2 // How many times over the write rate will we go?
+
 static struct task_struct *ddwriteback_thread;
 
 static unsigned long kilobytes_written_from_page_cache(void) {
@@ -44,9 +46,9 @@ static int ddwriteback_kthread_runner(void *params) {
     // Is it highest rate we've seen?
     if(kilobytes_delta > highest_rate) {
       highest_rate = kilobytes_delta;
-      printk(KERN_INFO "ddwriteback_kthread_runner: NEW write rate: %luKB/s\n", highest_rate);
-      dirty_background_ratio = 0;
-      dirty_background_bytes = highest_rate * 1024; // Rew rate!
+      dirty_background_ratio = 0; // Always reset this
+      dirty_background_bytes = highest_rate * 1024 * WRITE_SCALING; // Install the new rate
+      printk(KERN_INFO "ddwriteback_kthread_runner: UPDATE dirty_background_bytes=%luKB\n", dirty_background_bytes/1024);
     }
 
     printk(KERN_INFO "ddwriteback_kthread_runner: total written: %lu  write rate: %luKB/s\n", global_page_state(NR_WRITTEN), kilobytes_delta);
